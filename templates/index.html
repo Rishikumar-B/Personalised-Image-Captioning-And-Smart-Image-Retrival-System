@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition & Captioning</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .personalized-badge {
+            display: inline-block;
+            background-color: #2ecc71;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Personalized Image Captioning</h1>
+
+    <div class="section">
+        <h2>Face Registration</h2>
+        <form id="registerForm" enctype="multipart/form-data">
+            <label for="name">Person's Name:</label>
+            <input type="text" name="name" required>
+            <br><br>
+            <input type="file" name="image" accept="image/*" required>
+            <br><br>
+            <button type="submit">Register Face</button>
+        </form>
+        <div id="registerResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Face Search</h2>
+        <form id="searchForm" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br><br>
+            <button type="submit">Search Face</button>
+        </form>
+        <div id="searchResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Generate Image Caption</h2>
+        <form id="captionForm" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br><br>
+            <button type="submit">Generate Caption</button>
+        </form>
+        <div id="captionResult" class="result"></div>
+    </div>
+
+    <script>
+        // Handle form submissions with AJAX
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const resultDiv = document.getElementById('registerResult');
+            resultDiv.textContent = "Registering face...";
+            
+            const formData = new FormData(this);
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.textContent = data.message || data.error;
+            })
+            .catch(error => {
+                resultDiv.textContent = 'Error: ' + error;
+            });
+        });
+
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const resultDiv = document.getElementById('searchResult');
+            resultDiv.textContent = "Searching for face...";
+            
+            const formData = new FormData(this);
+            fetch('/search', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    resultDiv.innerHTML = `
+                        <strong>${data.message}</strong><br>
+                        ${data.name ? `Name: ${data.name}<br>` : ''}
+                        ${data.similarity ? `Similarity: ${data.similarity}` : ''}
+                    `;
+                } else {
+                    resultDiv.textContent = data.error || 'No results found';
+                }
+            })
+            .catch(error => {
+                resultDiv.textContent = 'Error: ' + error;
+            });
+        });
+
+        document.getElementById('captionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const resultDiv = document.getElementById('captionResult');
+            resultDiv.innerHTML = "<p>Generating caption...</p>";
+            
+            const formData = new FormData(this);
+            fetch('/generate_caption', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultHTML = `<p><strong>${data.caption || data.error}</strong>`;
+                if (data.is_personalized) {
+                    resultHTML += ` <span class="personalized-badge">Personalized</span>`;
+                }
+                resultHTML += `</p>`;
+                resultDiv.innerHTML = resultHTML;
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<p>Error: ${error}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='gallery-styles.css') }}">
+    <title>Image Captioning System</title>
+</head>
+<body>
+    <div class="header-container">
+        <h1>Image Captioning System</h1>
+        <a href="http://127.0.0.1:5000/" class="switch-app-btn">Go to Face Recognition</a>
+    </div>
+    <div class="container">  
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'view')">View Images</button>
+            <button class="tablinks" onclick="openTab(event, 'upload')">Upload Images</button>
+            <button class="tablinks" onclick="openTab(event, 'search')">Search by Caption</button>
+        </div>
+        
+        <!-- View Images Tab -->
+        <div id="view" class="tabcontent" style="display: block;">
+            <h2>View Uploaded Images</h2>
+            <div class="image-actions">
+                <button type="button" id="selectAllBtn" onclick="toggleSelectAll()">Select All</button>
+                <button type="button" id="deleteSelectedBtn" onclick="deleteSelectedImages()">Delete Selected</button>
+            </div>
+            <div id="imageGallery" class="gallery-container"></div>
+        </div>
+        
+        <!-- Upload Images Tab -->
+        <div id="upload" class="tabcontent">
+            <h2>Upload Images</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="upload-container">
+                    <input type="file" name="images" id="images" multiple accept="image/*">
+                    <p>Drag and drop files here or click to select multiple images</p>
+                </div>
+                <button type="button" onclick="uploadFiles()">Upload and Generate Captions</button>
+            </form>
+            <div id="results"></div>
+        </div>
+        
+        <!-- Search by Caption Tab -->
+        <div id="search" class="tabcontent">
+            <h2>Search Images by Caption</h2>
+            <form id="searchForm" onsubmit="return searchCaptions(event)">
+                <div class="search-box">
+                    <input type="text" name="query" placeholder="Enter caption to search (e.g., 'ronaldo with a cup')" required>
+                    <button type="submit">Search</button>
+                </div>
+            </form>
+            <p>Examples: "a man with a dog", "people at a party", "someone holding a trophy"</p>
+            <div id="searchResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+            
+            // Load images when View tab is opened
+            if (tabName === 'view') {
+                loadImages();
+            }
+        }
+        
+        // Load all images from server
+        function loadImages() {
+            fetch('/get_images')
+                .then(response => response.json())
+                .then(data => {
+                    const gallery = document.getElementById('imageGallery');
+                    gallery.innerHTML = '';
+                    
+                    if (data.error) {
+                        gallery.innerHTML = `<p class="error">${data.error}</p>`;
+                        return;
+                    }
+                    
+                    if (data.images.length === 0) {
+                        gallery.innerHTML = '<p>No images found</p>';
+                        return;
+                    }
+                    
+                    data.images.forEach(image => {
+                        const imageCard = document.createElement('div');
+                        imageCard.className = 'gallery-card';
+                        imageCard.innerHTML = `
+                            <div class="image-checkbox">
+                                <input type="checkbox" id="img-${image.filename}" name="selected_images" value="${image.filename}">
+                            </div>
+                            <img src="/static/captioned_images/${image.filename}" class="gallery-image">
+                            <div class="image-info">
+                                <p><strong>Caption:</strong> ${image.caption}</p>
+                                <p><small>Uploaded: ${new Date(image.upload_time).toLocaleString()}</small></p>
+                            </div>
+                        `;
+                        gallery.appendChild(imageCard);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading images:', error);
+                    document.getElementById('imageGallery').innerHTML = `<p class="error">Error loading images</p>`;
+                });
+        }
+        
+        // Toggle select all images
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('input[name="selected_images"]');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !allChecked;
+            });
+            
+            selectAllBtn.textContent = allChecked ? 'Select All' : 'Deselect All';
+        }
+        
+        // Delete selected images
+        function deleteSelectedImages() {
+            const selected = Array.from(document.querySelectorAll('input[name="selected_images"]:checked'))
+                                .map(checkbox => checkbox.value);
+            
+            if (selected.length === 0) {
+                alert('Please select at least one image to delete');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete ${selected.length} selected image(s)?`)) {
+                return;
+            }
+            
+            fetch('/delete_images', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ images: selected })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Successfully deleted ${data.deleted_count} image(s)`);
+                    loadImages();
+                } else {
+                    alert('Error deleting images: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting images');
+            });
+        }
+        
+        // Existing upload and search functions remain the same
+        function uploadFiles() {
+            const formData = new FormData(document.getElementById('uploadForm'));
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Processing images...</p>';
+            
+            fetch('/upload_images', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultsDiv.innerHTML = '<h3>Upload Results</h3>';
+                
+                if (data.error) {
+                    resultsDiv.innerHTML += `<p class="error">${data.error}</p>`;
+                }
+                
+                if (data.results) {
+                    data.results.forEach(result => {
+                        const resultDiv = document.createElement('div');
+                        resultDiv.className = 'result-item';
+                        
+                        if (result.status === 'success') {
+                            resultDiv.innerHTML = `
+                                <img src="/static/captioned_images/${result.filename}" class="image-preview">
+                                <p><strong>Caption:</strong> ${result.caption}</p>
+                                ${result.is_personalized ? `<p><strong>Recognized:</strong> ${result.recognized_names.join(', ')}</p>` : ''}
+                                <p class="success">Processed successfully</p>
+                                <hr>
+                            `;
+                        } else {
+                            resultDiv.innerHTML = `
+                                <p class="error">Failed to process ${result.filename}</p>
+                                <p class="error">Error: ${result.error}</p>
+                                <hr>
+                            `;
+                        }
+                        
+                        resultsDiv.appendChild(resultDiv);
+                    });
+                }
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            });
+        }
+        
+        function searchCaptions(event) {
+            event.preventDefault();
+            const formData = new FormData(document.getElementById('searchForm'));
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<p>Searching...</p>';
+            
+            fetch('/search_captions', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.text())
+            .then(html => {
+                resultsDiv.innerHTML = html;
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = `<p class="error">Search error: ${error.message}</p>`;
+            });
+            
+            return false;
+        }
+        
+        // Load images on page load if on view tab
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash === '#view' || 
+                document.querySelector('.tabcontent[style*="display: block"]').id === 'view') {
+                loadImages();
+            }
+        });
+    </script>
+</body>
+</html>

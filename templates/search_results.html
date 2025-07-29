@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='gallery-styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+        }
+        .image-container {
+            margin-right: 20px;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+        }
+        .caption-info {
+            flex-grow: 1;
+        }
+        .similarity {
+            font-weight: bold;
+            color: #2c7be5;
+        }
+        .upload-time {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .personalized-tag {
+            background-color: #e6f7ff;
+            color: #1890ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Results for: "{{ query }}"</h1>
+    <div class="container">
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% elif results %}
+        <p>{{ results|length }} matching images found:</p>
+        
+        {% for result in results %}
+        <div class="result-item">
+            <div class="image-container">
+                <img src="/static/captioned_images/{{ result.image_path }}" class="image-preview">
+            </div>
+            <div class="caption-info">
+                <p>
+                    <strong>Caption:</strong> {{ result.caption }}
+                    {% if result.is_personalized %}
+                        <span class="personalized-tag">Personalized</span>
+                    {% endif %}
+                </p>
+                <p class="similarity">Similarity: {{ "%.2f"|format(result.similarity * 100) }}%</p>
+                <p class="upload-time">Uploaded: {{ result.upload_time }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No matching images found.</p>
+    {% endif %}
+    
+    <p><a href="/search_captions">Search again</a></p>
+    </div>
+</body>
+</html>
