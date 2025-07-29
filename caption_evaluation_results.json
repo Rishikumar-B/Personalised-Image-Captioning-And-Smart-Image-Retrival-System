@@ -1,0 +1,83 @@
+{
+  "summary": {
+    "total_cases": 10,
+    "successful_cases": 0,
+    "avg_token_accuracy": 0,
+    "avg_bleu_score": 0,
+    "exact_matches": 0,
+    "successful_name_incorporation": 0,
+    "error_cases": 10
+  },
+  "detailed_results": [
+    {
+      "image": "20250409_005748_virat_dhoni.jpeg",
+      "ground_truth": "Virat and Dhoni are standing in a field",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250409_010010_bird.jpeg",
+      "ground_truth": "A bird sitting on a tree branch in a morning",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250409_010033_sundar_sachin.jpeg",
+      "ground_truth": "Sundar and Sachin Tendulkar are posing to a picture",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250414_005316_kh3.jpeg",
+      "ground_truth": "Kamala harris is standing in front of a microphone",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250413_190725_vijay2jpeg.jpeg",
+      "ground_truth": "Vijay is standing infront of flowers",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250409_133616_dhoni_jad.jpeg",
+      "ground_truth": "Dhoni and Jadeja are with a cup",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250409_005136_bori2.jpg",
+      "ground_truth": "Rishi and Bose is standing in front of a river",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250409_005755_viratdhonbluejpeg.jpeg",
+      "ground_truth": "Virat and Dhoni are standing a field",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250413_182634_ajith_helmet.jpeg",
+      "ground_truth": "Ajith places his helmet in a table",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    },
+    {
+      "image": "20250409_005136_bori2.jpg",
+      "ground_truth": "Rishi and Bose is standing in front of a river",
+      "result": {
+        "error": "API request failed with status 405"
+      }
+    }
+  ]
+}
